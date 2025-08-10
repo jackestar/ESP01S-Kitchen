@@ -1,0 +1,10 @@
+*.elf
+*.bin
+*.hex
+*.o
+*.a
+*.so
+build/
+.vscode/
+credentials.h
+*.old
