@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP01S Heater Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        input, button { font-size: 1em; margin: 5px; }
+        .status { padding: 10px; border-radius: 5px; background-color: #eee; }
+    </style>
+</head>
+<body>
+    <h2>ESP01S Heater Control</h2>
+
+    <div class="status">
+        <p>System Status: <b>%%STATUS%%</b></p>
+        <p>Heater Output: <b>%%OUTPUT_STATE%%</b></p>
+        <p>Time Left: <b>%%TIME_LEFT%%</b></p>
+    </div>
+    
+    <form method="POST">
+        <button name="toggle" value="1">Toggle System</button>
+    </form>
+
+    <h3>Configuration</h3>
+    <form method="POST">
+        Initial ON time (min): <input type="number" name="initial_on_time" value="%%INITIAL_ON%%"><br>
+        PWM Period (min): <input type="number" name="pwm_period" value="%%PWM_PERIOD%%"><br>
+        PWM Duty (%): <input type="number" name="pwm_duty" value="%%PWM_DUTY%%"><br>
+        Timer (min): <input type="number" name="timer_minutes" value="%%TIMER_MINS%%"><br>
+        <input type="submit" value="Update Config">
+    </form>
+</body>
+</html>
