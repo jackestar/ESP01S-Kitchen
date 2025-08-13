@@ -5,32 +5,293 @@
     <title>ESP01S Heater Control</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-        form { margin-bottom: 20px; }
-        input, button { font-size: 1em; margin: 5px; }
-        .status { padding: 10px; border-radius: 5px; background-color: #eee; }
+
+        body {
+            margin: 0;
+            padding: 2em;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        h2, h3 {
+            color: #1c1c1e;
+        }
+
+        .status {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 400px;
+            background-color: #fff;
+            padding: 0.5em 1em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1em;
+        }
+
+        .status p {
+            padding: 0.5em;
+        }
+
+        .time {
+            display: flex;
+            justify-content: center;
+            font-size: 2em;
+            font-family: monospace;
+            margin: 0.5em 0;
+        }
+
+        .control-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1em 0;
+        }
+
+        .control-container svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg); /* Start from the top */
+        }
+
+        .slider-track,
+        .slider-progress {
+            fill: none;
+            stroke-width: 20;
+        }
+
+        .slider-track {
+            stroke: #e6e6e6;
+        }
+
+        .slider-progress {
+            stroke: #007aff;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+        
+        #pwm-value {
+            position: absolute;
+            bottom: -35px;
+            font-size: 1.5em;
+            font-family: monospace;
+            color: #555;
+        }
+
+        button[name=toggle] {
+            width: 120px;
+            height: 120px;
+            border: none;
+            border-radius: 50%;
+            background-color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            z-index: 10;
+        }
+        button[name=toggle]:hover {
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition:.2s ease;
+        }
+        
+        button[name=toggle]:active {
+            transform: scale(0.95);
+        }
+
+        form[method="POST"] {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .config-form {
+            background-color: #fff;
+            padding: 1.5em;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-top: 1em;
+            width: 100%;
+            max-width: 350px;
+        }
+        
+        .config-form input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .config-form input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007aff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .config-form input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
     </style>
 </head>
 <body>
-    <h2>ESP01S Heater Control</h2>
+    <h2>Cosina</h2>
 
     <div class="status">
-        <p>System Status: <b>%%STATUS%%</b></p>
-        <p>Heater Output: <b>%%OUTPUT_STATE%%</b></p>
-        <p>Time Left: <b>%%TIME_LEFT%%</b></p>
+        <p>Estado: <b class="actual">%%STATUS%%</b></p>
+        <p>Cocina: <b>%%OUTPUT_STATE%%</b></p>
     </div>
     
-    <form method="POST">
-        <button name="toggle" value="1">Toggle System</button>
+    <form method="POST" id="control-form">
+        <div class="control-container" id="slider-container">
+            <svg>
+                <circle class="slider-track" cx="100" cy="100" r="90"></circle>
+                <circle class="slider-progress" id="slider-progress" cx="100" cy="100" r="90"></circle>
+            </svg>
+            <button name="toggle" value="1"></button>
+            <div id="pwm-value">0%</div>
+        </div>
+        <input type="hidden" name="pwm_duty" id="pwm_duty_input" value="%%PWM_DUTY%%">
     </form>
 
-    <h3>Configuration</h3>
-    <form method="POST">
-        Initial ON time (min): <input type="number" name="initial_on_time" value="%%INITIAL_ON%%"><br>
-        PWM Period (min): <input type="number" name="pwm_period" value="%%PWM_PERIOD%%"><br>
-        PWM Duty (%): <input type="number" name="pwm_duty" value="%%PWM_DUTY%%"><br>
-        Timer (min): <input type="number" name="timer_minutes" value="%%TIMER_MINS%%"><br>
-        <input type="submit" value="Update Config">
+    <div class="time">
+        <p><b>%%TIME_LEFT%%</b></p>
+    </div>
+
+    <form method="POST" class="config-form">
+        Temporizador (min): <input type="number" name="timer_minutes" value="%%TIMER_MINS%%"><br>
+        <details>
+            <summary>Configuracion</summary>
+            Initial ON time (min): <input type="number" name="initial_on_time" value="%%INITIAL_ON%%"><br>
+            PWM Period (min): <input type="number" name="pwm_period" value="%%PWM_PERIOD%%"><br>
+        </details>
+        <input type="submit" value="Establecer Tiempo">
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const actualStatus = document.querySelector(".actual").textContent.trim();
+            if (actualStatus === 'Off') {
+                document.body.style.backgroundColor = '#f0f0f0';
+            } else if (actualStatus === 'On - Temporizador' ) {
+                document.body.style.backgroundColor = '#fff4e5';
+            } else if (actualStatus === 'On - Regulado') {
+                document.body.style.backgroundColor = '#e5f7ff';
+            } else if (actualStatus === 'On - Temporizador & Regulado') {
+                document.body.style.backgroundColor = '#e5ffe5';
+            } else {
+                document.body.style.backgroundColor = '#e5e5e5';
+            }
+            const container = document.getElementById('slider-container');
+            const progressCircle = document.getElementById('slider-progress');
+            const pwmInput = document.getElementById('pwm_duty_input');
+            const pwmValueDisplay = document.getElementById('pwm-value');
+            const toggleButton = document.querySelector('button[name=toggle]');
+            
+            const radius = progressCircle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            progressCircle.style.strokeDasharray = circumference;
+
+            let isDragging = false;
+
+            updateSlider = (value) =>{
+                const val = Math.max(0, Math.min(100, value));
+                const offset = circumference - (val / 100) * circumference;
+                progressCircle.style.strokeDashoffset = offset;
+                pwmInput.value = Math.round(val);
+                pwmValueDisplay.textContent = `${Math.round(val)}%`;
+            }
+
+            getAngle = (event) =>{
+                const rect = container.getBoundingClientRect();
+                const clientX = event.clientX || event.touches[0].clientX;
+                const clientY = event.clientY || event.touches[0].clientY;
+                const x = clientX - rect.left - rect.width / 2;
+                const y = clientY - rect.top - rect.height / 2;
+                let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+                if (angle < 0) {
+                    angle += 360;
+                }
+                return angle;
+            }
+
+            handleInteraction = (event) =>{
+                event.preventDefault();
+                const angle = getAngle(event);
+                const value = (angle / 360) * 100;
+                updateSlider(value);
+            }
+
+            // Prevent slider interaction when clicking the button
+            toggleButton.addEventListener('mousedown', (e) => e.stopPropagation());
+            toggleButton.addEventListener('touchstart', (e) => e.stopPropagation());
+            // Prevent reload
+            // toggleButton.addEventListener('click', (e) => e.preventDefault());
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                handleInteraction(e);
+            });
+            
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                handleInteraction(e);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    handleInteraction(e);
+                }
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    handleInteraction(e);
+                }
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (isDragging) {
+                    isDragging = false;
+                    // Automatically submit the form when the user releases the slider
+                    document.getElementById('control-form').submit();
+                }
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                if (isDragging) {
+                    isDragging = false;
+                    document.getElementById('control-form').submit();
+                }
+            });
+
+            // document.addEventListener('click', (e) => e.preventDefault());
+
+            // Set initial value from the server-side variable
+            const initialValue = parseInt(pwmInput.value, 10) || 0;
+            updateSlider(initialValue);
+        });
+    </script>
 </body>
 </html>

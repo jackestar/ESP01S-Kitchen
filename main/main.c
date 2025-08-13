@@ -11,7 +11,6 @@
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "esp_http_server.h"
-// #include "driver/uart.h"
 
 #define SWITCH_GPIO 2  // GPIO2 as input (must be HIGH at boot)
 #define OUTPUT_GPIO 0  // GPIO0 as output for the heating element
@@ -24,8 +23,8 @@
 // --- Global State and Configuration ---
 static volatile bool system_on = false;
 static volatile bool output_state = false; // Represents the physical output pin state
-static volatile int initial_on_time = 1;   // minutes
-static volatile int pwm_period = 0;        // minutes (0 = disabled)
+static volatile int initial_on_time = 2;   // minutes
+static volatile int pwm_period = 1;        // minutes (0 = disabled)
 static volatile int pwm_duty = 100;        // percent
 static volatile int timer_minutes = 0;     // minutes (0 = disabled)
 static volatile int time_left_seconds = 0; // Time left for the timer in seconds
@@ -126,11 +125,11 @@ const char *get_status_string()
     if (!system_on)
         return "Off";
     if (timer_minutes > 0 && pwm_period > 0)
-        return "On - Timer & PWM";
+        return "On - Temporizador & Regulado";
     if (timer_minutes > 0)
-        return "On - Timer";
+        return "On - Temporizador";
     if (pwm_period > 0)
-        return "On - PWM";
+        return "On - Regulado";
     return "On";
 }
 
