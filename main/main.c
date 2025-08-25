@@ -244,6 +244,24 @@ esp_err_t ui_post_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+esp_err_t state_get_handler(httpd_req_t *req) {
+    char json_response[256];
+
+    xSemaphoreTake(state_mutex, portMAX_DELAY);
+    snprintf(json_response, sizeof(json_response),
+             "{\"status\":\"%s\",\"output_state\":\"%s\",\"time_left\":\"%d min %d sec\",\"initial_on_time\":%d,\"pwm_period\":%d,\"pwm_duty\":%d,\"timer_minutes\":%d}",
+             get_status_string(),
+             output_state ? "ON" : "OFF",
+             time_left_seconds / 60, time_left_seconds % 60,
+             initial_on_time, pwm_period, pwm_duty, timer_minutes);
+    xSemaphoreGive(state_mutex);
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, json_response, strlen(json_response));
+
+    return ESP_OK;
+}
+
 // --- Control Tasks ---
 
 void heater_control_task(void *arg)
@@ -461,10 +479,14 @@ void start_webserver(void)
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.stack_size = 8192;
     httpd_start(&server, &config);
+
     httpd_uri_t ui_get = {.uri = "/", .method = HTTP_GET, .handler = ui_get_handler, .user_ctx = NULL};
     httpd_uri_t ui_post = {.uri = "/", .method = HTTP_POST, .handler = ui_post_handler, .user_ctx = NULL};
+    httpd_uri_t state_get = {.uri = "/state", .method = HTTP_GET, .handler = state_get_handler, .user_ctx = NULL};
+
     httpd_register_uri_handler(server, &ui_get);
     httpd_register_uri_handler(server, &ui_post);
+    httpd_register_uri_handler(server, &state_get);
 }
 
 void wifi_init_sta(void)

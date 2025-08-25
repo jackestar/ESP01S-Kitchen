@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ESP01S Heater Control</title>
+    <title>Control - Cocina</title>
+    <meta name="theme-color" content="#f0f2f5" />
+    <meta name="description" content="Control - Cocina" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/jackestar/ESP01S-Kitchen/master/icon.png" type="image/png">
     <style>
 
         body {
@@ -156,7 +159,7 @@
     </style>
 </head>
 <body>
-    <h2>Cosina</h2>
+    <h2>Cocina</h2>
 
     <div class="status">
         <p>Estado: <b class="actual">%%STATUS%%</b></p>
@@ -182,7 +185,7 @@
     <form method="POST" class="config-form">
         Temporizador (min): <input type="number" name="timer_minutes" value="%%TIMER_MINS%%"><br>
         <details>
-            <summary>Configuracion</summary>
+            <summary>Configuración</summary>
             Initial ON time (min): <input type="number" name="initial_on_time" value="%%INITIAL_ON%%"><br>
             PWM Period (min): <input type="number" name="pwm_period" value="%%PWM_PERIOD%%"><br>
         </details>
@@ -285,13 +288,60 @@
                     document.getElementById('control-form').submit();
                 }
             });
-
-            // document.addEventListener('click', (e) => e.preventDefault());
-
             // Set initial value from the server-side variable
             const initialValue = parseInt(pwmInput.value, 10) || 0;
             updateSlider(initialValue);
         });
     </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const updateState = async () => {
+            try {
+                const response = await fetch('/state');
+                if (!response.ok) {
+                    console.error('Failed to fetch state');
+                    return;
+                }
+                const state = await response.json();
+
+                // Update the page dynamically
+                const statusElement = document.querySelector('.status .actual');
+                const outputStateElement = document.querySelector('.status b:nth-of-type(2)');
+                const timeLeftElement = document.querySelector('.time p b');
+                const timerMinutesInput = document.querySelector('input[name=timer_minutes]');
+                const initialOnTimeInput = document.querySelector('input[name=initial_on_time]');
+                const pwmPeriodInput = document.querySelector('input[name=pwm_period]');
+                const pwmDutyInput = document.querySelector('input[name=pwm_duty]');
+
+                if (statusElement) statusElement.textContent = state.status;
+                if (outputStateElement) outputStateElement.textContent = state.output_state;
+                if (timeLeftElement) timeLeftElement.textContent = state.time_left;
+                if (timerMinutesInput) timerMinutesInput.value = state.timer_minutes;
+                if (initialOnTimeInput) initialOnTimeInput.value = state.initial_on_time;
+                if (pwmPeriodInput) pwmPeriodInput.value = state.pwm_period;
+                if (pwmDutyInput) pwmDutyInput.value = state.pwm_duty;
+
+                // Update slider dynamically
+                const pwmValueDisplay = document.getElementById('pwm-value');
+                const progressCircle = document.getElementById('slider-progress');
+                const radius = progressCircle.r.baseVal.value;
+                const circumference = 2 * Math.PI * radius;
+                const value = Math.max(0, Math.min(100, state.pwm_duty));
+                const offset = circumference - (value / 100) * circumference;
+                progressCircle.style.strokeDashoffset = offset;
+                if (pwmDutyInput) pwmDutyInput.value = Math.round(value);
+                if (pwmValueDisplay) pwmValueDisplay.textContent = `${Math.round(value)}%`;
+            } catch (error) {
+                console.error('Error fetching state:', error);
+            }
+        };
+
+        // Fetch state every 900 milliseconds
+        setInterval(updateState, 900);
+
+        // Initial fetch
+        updateState();
+    });
+</script>
 </body>
 </html>
