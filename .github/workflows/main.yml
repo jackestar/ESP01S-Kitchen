@@ -1,0 +1,43 @@
+name: ESP8266 RTOS SDK Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git wget flex bison gperf python3 python3-pip cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+
+      - name: Install ESP8266 RTOS SDK
+        run: |
+          git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git $HOME/esp8266-rtos-sdk
+          echo "export IDF_PATH=$HOME/esp8266-rtos-sdk" >> $GITHUB_ENV
+          python3 -m pip install --upgrade pip
+          $IDF_PATH/install.sh
+
+      - name: Set up toolchain
+        run: |
+          echo "$HOME/xtensa-lx106-elf/bin" >> $GITHUB_PATH
+
+      - name: Build firmware
+        run: |
+          cd $GITHUB_WORKSPACE
+          . $IDF_PATH/export.sh
+          make
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: build/*.bin
