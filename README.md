@@ -7,7 +7,8 @@
 
 ## Goal
 
-Controlling a resistive AC heating element using an SSR (Solid State Relay) controlled by a ESP01 (or ESP01S, ESP8266 based board)
+Controlling a resistive AC heating element using an SSR (Solid State Relay) controlled by a ESP01 (or ESP01S, ESP8266 based board), using the ESP8266 RTOS SDK.
+
 * Push-button On/Off
 * App Control (On/Off, Timer, Dimmer)
 * OTA Update
