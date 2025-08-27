@@ -42,6 +42,7 @@ jobs:
             echo "Cloning ESP8266 RTOS SDK (ref: '${{ inputs.sdk-ref }}')"
             git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git "$HOME/esp8266-rtos-sdk" --branch "${{ inputs.sdk-ref }}" --depth 1 || \
               git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git "$HOME/esp8266-rtos-sdk" --depth 1
+            echo "IDF_PATH=$HOME/esp8266-rtos-sdk" >> $GITHUB_ENV
             export IDF_PATH=$HOME/esp8266-rtos-sdk
             python3 -m pip install --upgrade pip
             # run the SDK installer only when we freshly cloned (or cache miss)
