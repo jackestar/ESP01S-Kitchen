@@ -2,7 +2,7 @@ name: ESP8266 RTOS SDK Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -12,24 +12,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Restore SDK, pip and ccache caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/esp8266-rtos-sdk
+            ~/.cache/pip
+            ~/.ccache
+            ~/.espressif
+          # include sdk-ref so a change in SDK ref invalidates the SDK cache
+          key: esp8266-${{ runner.os }}-sdk-${{ inputs.sdk-ref }}
+          restore-keys: |
+            esp8266-${{ runner.os }}-sdk-
+
       - name: Install dependencies
+        if: ${{ inputs.install-deps == 'true' }}
+        shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y git wget flex bison gperf python3 python3-pip cmake ninja-build ccache libffi-dev libssl-dev dfu-util unzip xz-utils
 
       - name: Install ESP8266 RTOS SDK
+        shell: bash
         run: |
-          git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git $HOME/esp8266-rtos-sdk
-          echo "IDF_PATH=$HOME/esp8266-rtos-sdk" >> $GITHUB_ENV
-          export IDF_PATH=$HOME/esp8266-rtos-sdk
-          python3 -m pip install --upgrade pip
-          $IDF_PATH/install.sh
+          # If cache restored the SDK directory exists; skip clone/install in that case.
+          if [ -d "$HOME/esp8266-rtos-sdk" ]; then
+            echo "ESP8266 RTOS SDK found in cache at $HOME/esp8266-rtos-sdk - skipping clone and install"
+          else
+            echo "Cloning ESP8266 RTOS SDK (ref: '${{ inputs.sdk-ref }}')"
+            git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git "$HOME/esp8266-rtos-sdk" --branch "${{ inputs.sdk-ref }}" --depth 1 || \
+              git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git "$HOME/esp8266-rtos-sdk" --depth 1
+            python3 -m pip install --upgrade pip
+            # run the SDK installer only when we freshly cloned (or cache miss)
+            $HOME/esp8266-rtos-sdk/install.sh
+          fi
 
       - name: Build firmware
+        shell: bash
         run: |
-          cd $GITHUB_WORKSPACE
-          . $IDF_PATH/export.sh
-          make
+          export IDF_PATH=$HOME/esp8266-rtos-sdk
+          cd "$GITHUB_WORKSPACE"
+          . "$IDF_PATH/export.sh"
+          if [ -n "${{ inputs.make-target }}" ]; then
+            make ${{ inputs.make-target }}
+          else
+            make
+          fi
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
