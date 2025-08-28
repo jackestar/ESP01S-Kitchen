@@ -3,6 +3,8 @@
 <img src="icon.png" width="100" alt="logo" title="icon"/>
 </div>
 
+---
+
 ![Preview](preview.png)
 
 ## Goal
@@ -12,8 +14,8 @@ Controlling a resistive AC heating element using an SSR (Solid State Relay) cont
 * Push-button On/Off :heavy_check_mark:
 * App Control (On/Off, Timer, Dimmer) :heavy_check_mark:
 * OTA Update :x:
-* Easy Translations :x:
-* CI/CD (Github Actions) :construction:
+* Translations :x:
+* CI/CD (Github Actions) :heavy_check_mark:
 
 ## Build
 
@@ -35,13 +37,15 @@ git clone https://github.com/jackestar/ESP01S-Kitchen.git --depth 2
 make flash
 ```
 
-## Schematics
+## Board and Schematics
 
-![Swtt](ESP01-Driver.svg)
+![Swtt](Kicad/ESP01-Driver.jpg)
+
+[Kicad Proyect](Kicad)
 
 # License
 
-MIT License
+**This Repo** - MIT License
 
 **ESP8266 RTOS SDK** - Apache 2.0
 
