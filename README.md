@@ -39,9 +39,11 @@ make flash
 
 ## Board and Schematics
 
-![Swtt](Kicad/ESP01-Driver.jpg)
+[Articulo del Esquemático](https://jackestar.netlify.app/Blog/Kicad/ESP01S-Kitchen-Driver.html)
 
-[Kicad Proyect](Kicad)
+![Driver](Kicad/ESP01-Driver.jpg)
+
+[Kicad Project](Kicad)
 
 # License
 
