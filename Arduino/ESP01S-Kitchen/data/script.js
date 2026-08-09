@@ -1,4 +1,4 @@
-2document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     const actualStatus = document
         .querySelector(".actual")
         .textContent.trim();
@@ -121,7 +121,7 @@
                 document.getElementById("initial_on_input").value = state.initial_on_time;
                 document.getElementById("pwm_period_input").value = state.pwm_period;
             }
-            updateColors(state.status);
+            // updateColors(state.status);
         } catch (error) { console.error("Error fetching state:", error); }
     };
 

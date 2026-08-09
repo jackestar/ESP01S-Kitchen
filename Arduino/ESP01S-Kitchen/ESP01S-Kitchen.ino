@@ -112,7 +112,7 @@ void handleHeaterLogic() {
             output_state = false;
             digitalWrite(OUTPUT_PIN, LOW);
         } else {
-            unsigned long period_ms = pwm_period * 60000UL;
+            unsigned long period_ms = pwm_period * 1000UL;
             unsigned long on_time_ms = (period_ms * pwm_duty) / 100;
             
             // Where are we in the current PWM cycle?
@@ -175,14 +175,22 @@ void handleUpdate() {
     HTTPUpload& upload = server.upload();
     
     if (upload.status == UPLOAD_FILE_START) {
-        // Ensure password is correct before starting flash
         if (server.arg("password") != OTA_PASSWORD) {
-            Update.end(false); // Abort
+            Update.end(false); // Abort if password is wrong
             return;
         }
         WiFiUDP::stopAll();
-        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-        Update.begin(maxSketchSpace);
+        
+        // Check dropdown to see if we are updating Code or Filesystem
+        int command = U_FLASH; // Default to Firmware
+        size_t updateSize = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+        
+        if (server.arg("type") == "filesystem") {
+            command = U_FS;
+            updateSize = 0x10000; // 64KB for our 1M64 layout
+        }
+        
+        Update.begin(updateSize, command);
     } 
     else if (upload.status == UPLOAD_FILE_WRITE) {
         if (server.arg("password") == OTA_PASSWORD) {
@@ -228,7 +236,6 @@ void setup() {
     // server.serveStatic("/script.js", LittleFS, "/script.js");
     // server.serveStatic("/update.html", LittleFS, "/update.html");
     // This automatically serves index.html for "/", and handles all other files dynamically!
-    server.serveStatic("/", LittleFS, "/");
     
     server.on("/state", HTTP_GET, handleState);
     server.on("/post", HTTP_POST, handlePost);
@@ -241,6 +248,8 @@ void setup() {
         ESP.restart();
     }, handleUpdate);
 
+    server.serveStatic("/", LittleFS, "/");
+
     server.begin();
     
     // Start standard Timer interrupt (1 second interval)
@@ -252,21 +261,20 @@ void loop() {
     
     // 1. Debounced Button Polling
     int reading = digitalRead(SWITCH_PIN);
-    if (reading != lastButtonState) {
+    
+    // If button is LOW (pressed), was previously HIGH (released), and 250ms have passed:
+    if (reading == LOW && lastButtonState == HIGH && (millis() - lastDebounceTime > 250)) {
         lastDebounceTime = millis();
-    }
-    if ((millis() - lastDebounceTime) > 250) { // DEBOUNCE_MS
-        // Only trigger on Falling edge (LOW)
-        if (reading == LOW && lastButtonState == HIGH) {
-            system_on = !system_on;
-            if (!system_on) {
-                timer_minutes = 0;
-                time_left_seconds = 0;
-            } else if (timer_minutes > 0) {
-                time_left_seconds = timer_minutes * 60;
-            }
+        system_on = !system_on;
+        
+        if (!system_on) {
+            timer_minutes = 0;
+            time_left_seconds = 0;
+        } else if (timer_minutes > 0) {
+            time_left_seconds = timer_minutes * 60;
         }
     }
+    // Update the state for the next loop iteration
     lastButtonState = reading;
 
     // 2. Handle non-blocking heater and LED state
