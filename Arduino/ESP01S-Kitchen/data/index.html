@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Control - Cocina</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h2>Cocina</h2>
+  <div class="status">
+    <p>Estado: <b class="actual" id="status-text">Cargando...</b></p>
+    <p>Cocina: <b id="output-text">--</b></p>
+  </div>
+
+  <form method="POST" id="control-form" action="/post">
+    <div class="control-container" id="slider-container">
+      <svg><circle class="slider-track" cx="100" cy="100" r="90"></circle><circle class="slider-progress" id="slider-progress" cx="100" cy="100" r="90"></circle></svg>
+      <button name="toggle" value="1" type="submit" id="toggle-btn">
+        <svg viewBox="0 -960 960 960" id="toggle-icon"><path d="M480-80q-82.33 0-155.33-31.5-73-31.5-127.34-85.83Q143-251.67 111.5-324.67T80-480q0-84 31.83-156.5Q143.67-709 197.67-763l46.66 46.67q-46 45.33-71.83 106-25.83 60.66-25.83 130.33 0 138.67 97.33 236 97.33 97.33 236 97.33 139.33 0 236.33-97.33t97-236q0-69.67-25.5-130.33-25.5-60.67-71.5-106L763-763q54 54 85.5 126.5T880-480q0 82.33-31.5 155.33-31.5 73-85.5 127.34Q709-143 636-111.5T480-80Zm-33.33-360v-440h66.66v440h-66.66Z"/></svg>
+      </button>
+      <div id="pwm-value">0%</div>
+    </div>
+    <input type="hidden" name="pwm_duty" id="pwm_duty_input" value="0" />
+  </form>
+
+  <div class="time"><p><b id="time-left-text">--</b></p></div>
+
+  <form method="POST" class="config-form" action="/post">
+    <div class="timer-controls">
+      <button type="button" id="timer-decrease">-10</button>
+      <div class="inp">
+        <p>Temporizador (min):</p>
+        <input type="number" name="timer_minutes" id="timer_minutes_input" value="0" />
+      </div>
+      <button type="button" id="timer-increase">+10</button>
+    </div>
+    <details>
+      <summary>Configuración</summary>
+      <div class="inp"><p>Initial ON time (min):</p><input type="number" name="initial_on_time" id="initial_on_input" value="0" /></div><br />
+      <div class="inp"><p>PWM Period (min):</p><input type="number" name="pwm_period" id="pwm_period_input" value="0" /></div>
+    </details>
+    <input type="submit" value="Establecer Tiempo" />
+  </form>
+
+  <script src="script.js"></script>
+</body>
+</html>

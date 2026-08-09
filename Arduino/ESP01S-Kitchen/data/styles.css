@@ -1,0 +1,206 @@
+body {
+    margin: 0;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    box-sizing: border-box;
+}
+
+h2,
+h3 {
+    color: #1c1c1e;
+}
+
+.status {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 400px;
+    background-color: #fff;
+    padding: 0.5em 1em;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1em;
+}
+
+.status p {
+    padding: 0.5em;
+}
+
+.time {
+    display: flex;
+    justify-content: center;
+    font-size: 2em;
+    font-family: monospace;
+    margin: 0.5em 0;
+}
+
+.control-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1em 0;
+}
+
+.control-container>svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    /* Start from the top */
+}
+
+.slider-track,
+.slider-progress {
+    fill: none;
+    stroke-width: 20;
+}
+
+.slider-track {
+    stroke: #e6e6e6;
+}
+
+.slider-progress {
+    stroke: #007aff;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+#pwm-value {
+    position: absolute;
+    bottom: -35px;
+    font-size: 1.5em;
+    font-family: monospace;
+    color: #555;
+}
+
+button[name="toggle"] {
+    width: 120px;
+    height: 120px;
+    border: none;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button[name="toggle"] svg {
+    position: relative;
+}
+
+button[name="toggle"]:hover {
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: 0.2s ease;
+}
+
+button[name="toggle"]:active {
+    transform: scale(0.95);
+}
+
+form[method="POST"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.config-form {
+    background-color: #fff;
+    padding: 1.5em;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-top: 1em;
+    width: 100%;
+    max-width: 350px;
+}
+
+.config-form input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 3px solid #ccc;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.config-form input[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #007aff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.config-form input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+form .inp {
+    position: relative;
+    width: 100%;
+}
+
+form details {
+    width: 100%;
+    padding: 1em;
+}
+
+form details .inp {
+    margin: 0 0.5em;
+}
+
+form .inp p {
+    padding: 0 0.5em;
+    margin: 0 1em;
+    position: absolute;
+    font-size: 1em;
+    background: #fff;
+}
+
+form .inp input {
+    margin-top: 1em;
+}
+
+/* Timer control buttons */
+.config-form .timer-controls {
+    display: flex;
+    gap: 0.5em;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.config-form .timer-controls button {
+    padding: 8px 12px;
+    border-radius: 5em;
+    border: none;
+    background: #007aff;
+    cursor: pointer;
+    font-weight: bold;
+    color: #fff;
+}
+
+.config-form .timer-controls button:active {
+    transform: scale(0.98);
+}
