@@ -1,166 +1,142 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const actualStatus = document
-        .querySelector(".actual")
-        .textContent.trim();
-    const bd = document.body;
-    const bt = document.querySelector("button[name='toggle'] > svg");
-    if (actualStatus === "Off") {
-        bd.style.backgroundColor = "#f0f0f0";
-        bt.style.fill = "#a5f5a5";
-    } else if (actualStatus === "On - Temporizador") {
-        bd.style.backgroundColor = "#fff4e5";
-        bt.style.fill = "#f5a5a5";
-    } else if (actualStatus === "On - Regulado") {
-        bd.style.backgroundColor = "#e5f7ff";
-        bt.style.fill = "#f5a5a5";
-    } else if (actualStatus === "On - Temporizador & Regulado") {
-        bd.style.backgroundColor = "#e5ffe5";
-        bt.style.fill = "#f5a5a5";
+  const container = document.getElementById("slider-container");
+  const progressCircle = document.getElementById("slider-progress");
+  const pwmInput = document.getElementById("pwm_duty_input");
+  const pwmValueDisplay = document.getElementById("pwm-value");
+  const bd = document.body;
+  const bt = document.getElementById("toggle-icon");
+  
+  const radius = progressCircle.r.baseVal.value;
+  const circumference = 2 * Math.PI * radius;
+  progressCircle.style.strokeDasharray = circumference;
+
+  let isDragging = false;
+  let pauseFormUpdates = false;
+  let resumeTimeout;
+
+  // Pause background form updates when the user interacts with the form
+  const interactionHandler = () => {
+      pauseFormUpdates = true;
+      clearTimeout(resumeTimeout);
+      // Give the user 10 seconds of no-overwrite time to finish typing/clicking
+      resumeTimeout = setTimeout(() => { pauseFormUpdates = false; }, 10000);
+  };
+
+  // Listen for interaction on the config form (clicks, typing, focusing)
+  document.querySelectorAll('.config-form input, .config-form button').forEach(el => {
+      el.addEventListener('focus', interactionHandler);
+      el.addEventListener('input', interactionHandler);
+      el.addEventListener('click', interactionHandler);
+  });
+
+  const updateSlider = (value) => {
+    const val = Math.max(0, Math.min(100, value));
+    const offset = circumference - (val / 100) * circumference;
+    progressCircle.style.strokeDashoffset = offset;
+    pwmInput.value = Math.round(val);
+    pwmValueDisplay.textContent = `${Math.round(val)}%`;
+  };
+
+  const updateColors = (status) => {
+    if (status === "Off") {
+      bd.style.backgroundColor = "#f0f0f0"; bt.style.fill = "#a5f5a5";
+    } else if (status === "On - Temporizador") {
+      bd.style.backgroundColor = "#fff4e5"; bt.style.fill = "#f5a5a5";
+    } else if (status === "On - Regulado") {
+      bd.style.backgroundColor = "#e5f7ff"; bt.style.fill = "#f5a5a5";
+    } else if (status === "On - Temporizador & Regulado") {
+      bd.style.backgroundColor = "#e5ffe5"; bt.style.fill = "#f5a5a5";
     } else {
-        bd.style.backgroundColor = "#e5e5e5";
-        bt.style.fill = "#a5f5a5";
+      bd.style.backgroundColor = "#e5e5e5"; bt.style.fill = "#a5f5a5";
     }
-    const container = document.getElementById("slider-container");
-    const progressCircle = document.getElementById("slider-progress");
-    const pwmInput = document.getElementById("pwm_duty_input");
-    const pwmValueDisplay = document.getElementById("pwm-value");
-    const toggleButton = document.querySelector("button[name=toggle]");
+  };
 
-    const radius = progressCircle.r.baseVal.value;
-    const circumference = 2 * Math.PI * radius;
-    progressCircle.style.strokeDasharray = circumference;
+  const updateState = async () => {
+    try {
+      const response = await fetch("/state");
+      if (!response.ok) return;
+      const state = await response.json();
 
-    let isDragging = false;
+      document.getElementById("status-text").textContent = state.status;
+      document.getElementById("output-text").textContent = state.output_state;
+      document.getElementById("time-left-text").textContent = state.time_left;
 
-    updateSlider = (value) => {
-        const val = Math.max(0, Math.min(100, value));
-        const offset = circumference - (val / 100) * circumference;
-        progressCircle.style.strokeDashoffset = offset;
-        pwmInput.value = Math.round(val);
-        pwmValueDisplay.textContent = `${Math.round(val)}%`;
-    };
+      // Update Slider (unless currently dragging)
+      if(!isDragging) {
+         updateSlider(state.pwm_duty);
+      }
+      
+      // Update text fields (unless user is currently typing/interacting)
+      if (!pauseFormUpdates) {
+         document.getElementById("timer_minutes_input").value = state.timer_minutes;
+         document.getElementById("initial_on_input").value = state.initial_on_time;
+         document.getElementById("pwm_period_input").value = state.pwm_period;
+      }
 
-    getAngle = (event) => {
-        const rect = container.getBoundingClientRect();
-        const clientX = event.clientX || event.touches[0].clientX;
-        const clientY = event.clientY || event.touches[0].clientY;
-        const x = clientX - rect.left - rect.width / 2;
-        const y = clientY - rect.top - rect.height / 2;
-        let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
-        if (angle < 0) {
-            angle += 360;
-        }
-        return angle;
-    };
+      updateColors(state.status);
+    } catch (error) { console.error("Error fetching state:", error); }
+  };
 
-    handleInteraction = (event) => {
-        event.preventDefault();
-        const angle = getAngle(event);
-        const value = (angle / 360) * 100;
-        updateSlider(value);
-    };
+  setInterval(updateState, 1000);
+  updateState(); // Fetch immediately on load
+  
+  // --- Slider Logic ---
+  const getAngle = (event) => {
+    const rect = container.getBoundingClientRect();
+    const clientX = event.clientX || event.touches[0].clientX;
+    const clientY = event.clientY || event.touches[0].clientY;
+    const x = clientX - rect.left - rect.width / 2;
+    const y = clientY - rect.top - rect.height / 2;
+    let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+    if (angle < 0) angle += 360;
+    return angle;
+  };
 
-    // Prevent slider interaction when clicking the button
-    toggleButton.addEventListener("mousedown", (e) => e.stopPropagation());
-    toggleButton.addEventListener("touchstart", (e) => e.stopPropagation());
-    // Prevent reload
-    // toggleButton.addEventListener('click', (e) => e.preventDefault());
+  const handleSliderInteraction = (event) => {
+    event.preventDefault();
+    const angle = getAngle(event);
+    const value = (angle / 360) * 100;
+    updateSlider(value);
+  };
 
-    container.addEventListener("mousedown", (e) => {
-        isDragging = true;
-        handleInteraction(e);
+  // Prevent slider from triggering when pressing the center power button
+  const toggleButton = document.getElementById("toggle-btn");
+  toggleButton.addEventListener("mousedown", (e) => e.stopPropagation());
+  toggleButton.addEventListener("touchstart", (e) => e.stopPropagation());
+
+  container.addEventListener("mousedown", (e) => { isDragging = true; handleSliderInteraction(e); });
+  container.addEventListener("touchstart", (e) => { isDragging = true; handleSliderInteraction(e); });
+  document.addEventListener("mousemove", (e) => { if (isDragging) handleSliderInteraction(e); });
+  document.addEventListener("touchmove", (e) => { if (isDragging) handleSliderInteraction(e); });
+
+  const endDrag = () => {
+    if (isDragging) {
+      isDragging = false;
+      document.getElementById("control-form").submit();
+    }
+  };
+  
+  document.addEventListener("mouseup", endDrag);
+  document.addEventListener("touchend", endDrag);
+
+  // --- Timer +/-10 buttons ---
+  const incBtn = document.getElementById("timer-increase");
+  const decBtn = document.getElementById("timer-decrease");
+  const timerInput = document.getElementById("timer_minutes_input");
+
+  const clamp = (v) => Math.max(0, Math.round(v || 0));
+
+  if (incBtn && timerInput) {
+    incBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      timerInput.value = clamp(parseInt(timerInput.value, 10)) + 10;
     });
+  }
 
-    container.addEventListener("touchstart", (e) => {
-        isDragging = true;
-        handleInteraction(e);
+  if (decBtn && timerInput) {
+    decBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      timerInput.value = Math.max(0, clamp(parseInt(timerInput.value, 10)) - 10);
     });
-
-    document.addEventListener("mousemove", (e) => {
-        if (isDragging) {
-            handleInteraction(e);
-        }
-    });
-
-    document.addEventListener("touchmove", (e) => {
-        if (isDragging) {
-            handleInteraction(e);
-        }
-    });
-
-    document.addEventListener("mouseup", (e) => {
-        if (isDragging) {
-            isDragging = false;
-            // Automatically submit the form when the user releases the slider
-            document.getElementById("control-form").submit();
-        }
-    });
-
-    document.addEventListener("touchend", (e) => {
-        if (isDragging) {
-            isDragging = false;
-            document.getElementById("control-form").submit();
-        }
-    });
-    // Set initial value from the server-side variable
-    const initialValue = parseInt(pwmInput.value, 10) || 0;
-    updateSlider(initialValue);
-    const updateState = async () => {
-        try {
-            const response = await fetch("/state");
-            if (!response.ok) return;
-            const state = await response.json();
-
-            document.getElementById("status-text").textContent = state.status;
-            document.getElementById("output-text").textContent = state.output_state;
-            document.getElementById("time-left-text").textContent = state.time_left;
-
-            if (!isDragging) {
-                updateSlider(state.pwm_duty);
-                document.getElementById("timer_minutes_input").value = state.timer_minutes;
-                document.getElementById("initial_on_input").value = state.initial_on_time;
-                document.getElementById("pwm_period_input").value = state.pwm_period;
-            }
-            // updateColors(state.status);
-        } catch (error) { console.error("Error fetching state:", error); }
-    };
-
-    // Fetch state every 1000 milliseconds
-    setInterval(updateState, 1000);
-
-    // Initial fetch
-    updateState();
+  }
 });
-
-// Timer +/-10 buttons
-(function () {
-    const incBtn = document.getElementById("timer-increase");
-    const decBtn = document.getElementById("timer-decrease");
-    const timerInput = document.getElementById("timer_minutes_input");
-
-    const clamp = (v) => {
-        if (isNaN(v) || v === null) return 0;
-        return Math.max(0, Math.round(v));
-    };
-
-    if (incBtn && timerInput) {
-        incBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const cur = clamp(parseInt(timerInput.value, 10) || 0);
-            timerInput.value = cur + 10;
-
-            timerInput.placeholder = timerInput.value;
-            timerInput.title = timerInput.value;
-        });
-    }
-
-    if (decBtn && timerInput) {
-        decBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const cur = clamp(parseInt(timerInput.value, 10) || 0);
-            timerInput.value = Math.max(0, cur - 10);
-            timerInput.placeholder = timerInput.value;
-            timerInput.title = timerInput.value;
-        });
-    }
-})();

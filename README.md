@@ -9,32 +9,24 @@
 
 ## Goal
 
-Controlling a resistive AC heating element using an SSR (Solid State Relay) controlled by a ESP01 (or ESP01S, ESP8266 based board), using the ESP8266 RTOS SDK.
+Controlling a resistive AC heating element using an SSR (Solid State Relay) controlled by a ESP01 (or ESP01S, ESP8266 based board)
 
 * Push-button On/Off :heavy_check_mark:
 * App Control (On/Off, Timer, Dimmer) :heavy_check_mark:
-* OTA Update :x:
+* OTA Update
 * Translations :x:
 * CI/CD (Github Actions) :heavy_check_mark:
 
 ## Build
 
-> [!NOTE]
-> The main difference between the ESP01 and the ESP01S is the flash memory size, the Espressif SDK allows a minimum of 1MB so it verifies that the compiled file fits in the flash memory (~450kB ~330Kb compressed).
-
-* Install the [ESP8266 RTOS SDK](https://github.com/espressif/ESP8266_RTOS_SDK) and configure it.
-* Clone this repo
-
-```bash
-git clone https://github.com/jackestar/ESP01S-Kitchen.git --depth 2
 ```
+arduino-cli compile --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
 
-* set the environment `export IDF_PATH=[your ESP8266 SDK path]` and `. $IDF_PATH/export.sh`
+arduino-cli upload -p /dev/ttyUSB0 --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
 
-* make and flash
+mklittlefs -c ESP01S-Kitchen/data -p 256 -b 4096 -s 0x10000 littlefs.bin
 
-```
-make flash
+esptool.py --port /dev/ttyUSB0 write_flash 0xEB000 littlefs.bin
 ```
 
 ## Board and Schematics
