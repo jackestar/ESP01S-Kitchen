@@ -14,16 +14,10 @@
 #define OTA_PASSWORD "default_ota_pass"
 #endif
 
-
-// --- Configuration ---
-// const char* WIFI_SSID = "default_ssid";
-// const char* WIFI_PASS = "default_pass";
-// const char* OTA_PASSWORD = "mysecretpassword"; // Change this!
-
 // --- GPIOs ---
 const int SWITCH_PIN = 2;  // Button
 const int OUTPUT_PIN = 0;  // Heater SSR
-const int ACTIVE_PIN = 3;  // RX pin -> Indicator LED 1
+// const int ACTIVE_PIN = 3;  // RX pin -> Indicator LED 1
 const int ACTIVE2_PIN = 1; // TX pin -> Indicator LED 2
 
 // --- Globals ---
@@ -33,7 +27,7 @@ Ticker countdownTimer;
 volatile bool system_on = false;
 volatile bool output_state = false;
 volatile int initial_on_time = 2;   // minutes
-volatile int pwm_period = 1;        // minutes
+volatile int pwm_period = 30;        // seconds
 volatile int pwm_duty = 100;        // percent
 volatile int timer_minutes = 0;     // minutes
 volatile int time_left_seconds = 0; // seconds
@@ -53,7 +47,6 @@ String getStatusString() {
     return "On";
 }
 
-// Timer interrupt (runs every 1 second via Ticker)
 void timerTick() {
     if (system_on && timer_minutes > 0 && time_left_seconds > 0) {
         time_left_seconds--;
@@ -79,14 +72,14 @@ void handleHeaterLogic() {
         output_state = false;
         digitalWrite(OUTPUT_PIN, LOW);
         // Indicator LEDs turn OFF when system is OFF
-        digitalWrite(ACTIVE_PIN, LOW);
-        digitalWrite(ACTIVE2_PIN, LOW);
+        // digitalWrite(ACTIVE_PIN, HIGH);
+        digitalWrite(ACTIVE2_PIN, HIGH);
         return;
     }
 
     // System is ON: Indicator LEDs turn ON and stay ON regardless of PWM phase
-    digitalWrite(ACTIVE_PIN, HIGH);
-    digitalWrite(ACTIVE2_PIN, HIGH);
+    // digitalWrite(ACTIVE_PIN, LOW);
+    digitalWrite(ACTIVE2_PIN, LOW);
 
     unsigned long currentMillis = millis();
     unsigned long elapsed = currentMillis - stateChangeMillis;
@@ -211,8 +204,8 @@ void setup() {
     digitalWrite(OUTPUT_PIN, LOW);
     
     // Explicitly set TX/RX to normal GPIO Output mode
-    pinMode(ACTIVE_PIN, OUTPUT);
-    digitalWrite(ACTIVE_PIN, LOW);
+    // pinMode(ACTIVE_PIN, OUTPUT);
+    // digitalWrite(ACTIVE_PIN, LOW);
     pinMode(ACTIVE2_PIN, OUTPUT);
     digitalWrite(ACTIVE2_PIN, LOW);
 
@@ -223,7 +216,7 @@ void setup() {
     
     // Wait for WiFi
     while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+        delay(250);
     }
 
     if (!LittleFS.begin()) {

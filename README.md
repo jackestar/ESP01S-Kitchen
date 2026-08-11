@@ -37,6 +37,10 @@ esptool.py --port /dev/ttyUSB0 write_flash 0xEB000 littlefs.bin
 
 [Kicad Project](Kicad)
 
+## TODO
+
+- change OUTPUT_PIN (GPIO0) (GPIO0 blinks at start up)
+
 # License
 
 **This Repo** - MIT License
