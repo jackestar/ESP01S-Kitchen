@@ -4,6 +4,7 @@
 #include <Ticker.h>
 #include <WiFiUdp.h>
 
+#include <WebSocketsServer.h>
 #if __has_include("credentials.h")
 #include "credentials.h"
 #endif
@@ -14,7 +15,10 @@
 #define OTA_PASSWORD "default_ota_pass"
 #endif
 
+volatile bool timer_finished_event = false;
+
 // --- GPIOs ---
+WebSocketsServer webSocket = WebSocketsServer(81, "/ws");
 const int SWITCH_PIN = 2;  // Button
 const int OUTPUT_PIN = 0;  // Heater SSR
 // const int ACTIVE_PIN = 3;  // RX pin -> Indicator LED 1
@@ -22,9 +26,22 @@ const int ACTIVE2_PIN = 1; // TX pin -> Indicator LED 2
 
 // --- Globals ---
 ESP8266WebServer server(80);
+
+// signal main loop to broadcast an event (safe from timer context)
+// timer_finished_event = true;
+
 Ticker countdownTimer;
 
 volatile bool system_on = false;
+
+// WebSocket event handler (we don't expect incoming messages now)
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+    if (type == WStype_CONNECTED) {
+        // client connected
+    } else if (type == WStype_TEXT) {
+        // handle incoming text if needed
+    }
+}
 volatile bool output_state = false;
 volatile int initial_on_time = 2;   // minutes
 volatile int pwm_period = 30;        // seconds
@@ -53,6 +70,7 @@ void timerTick() {
         if (time_left_seconds <= 0) {
             system_on = false;
             timer_minutes = 0;
+            timer_finished_event = true;
         }
     }
 }
@@ -242,8 +260,15 @@ void setup() {
     }, handleUpdate);
 
     server.serveStatic("/", LittleFS, "/");
+    server.serveStatic("/manifest.json", LittleFS, "/manifest.json");
+    server.serveStatic("/sw.js", LittleFS, "/sw.js");
+    server.serveStatic("/icons", LittleFS, "/icons");
 
     server.begin();
+
+    // Start WebSocket server
+    webSocket.begin();
+    webSocket.onEvent(webSocketEvent);
     
     // Start standard Timer interrupt (1 second interval)
     countdownTimer.attach(1.0, timerTick);
@@ -251,6 +276,7 @@ void setup() {
 
 void loop() {
     server.handleClient();
+    webSocket.loop();
     
     // 1. Debounced Button Polling
     int reading = digitalRead(SWITCH_PIN);
@@ -275,4 +301,10 @@ void loop() {
     
     // Small delay to prevent watchdog reset if logic gets stuck
     delay(10);
+
+    if (timer_finished_event) {
+        timer_finished_event = false;
+        String msg = "{\"event\":\"timer_done\",\"message\":\"Timer finished\"}";
+        webSocket.broadcastTXT(msg);
+    }
 }

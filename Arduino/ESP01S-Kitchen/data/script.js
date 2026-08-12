@@ -140,3 +140,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// --- Service Worker, Notifications & WebSocket ---
+// Attempt WebSocket for realtime events (falls back to existing polling)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.catch(()=>{});
+}
+
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission().catch(()=>{});
+}
+
+(function tryWebSocket() {
+  try {
+    const ws = new WebSocket('ws://' + location.hostname + ':81/ws');
+    ws.addEventListener('open', () => console.log('WebSocket connected'));
+    ws.addEventListener('message', ev => {
+      try {
+        const payload = JSON.parse(ev.data);
+        if (payload.event === 'timer_done') {
+          // refresh UI state and notify the user
+          try { updateState(); } catch(e){}
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('ESP01S Timer', { body: payload.message || 'Timer finished', icon: '/icons/icon-192.png' });
+            } catch (e) {}
+          }
+        }
+      } catch (e) { }
+    });
+    ws.addEventListener('close', () => console.log('WebSocket closed'));
+    ws.addEventListener('error', () => console.log('WebSocket error'));
+  } catch (e) {
+    console.log('WebSocket init failed', e);
+  }
+})();
