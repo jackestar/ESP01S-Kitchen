@@ -225,7 +225,10 @@ void setup() {
 
     pinMode(SWITCH_PIN, INPUT_PULLUP);
 
+    WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+    WiFi.setAutoReconnect(true);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     
     // Wait for WiFi
