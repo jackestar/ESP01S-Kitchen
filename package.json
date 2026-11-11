@@ -1,0 +1,20 @@
+{
+  "name": "ESP01S-Kitchen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "budle": "node build.mjs"
+  },
+  "keywords": [],
+  "author": "Jackestar",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/css": "^2.0.1",
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "html-minifier-terser": "^7.2.0"
+  }
+}
