@@ -27,9 +27,6 @@ const int ACTIVE2_PIN = 1; // TX pin -> Indicator LED 2
 // --- Globals ---
 ESP8266WebServer server(80);
 
-// signal main loop to broadcast an event (safe from timer context)
-// timer_finished_event = true;
-
 Ticker countdownTimer;
 
 volatile bool system_on = false;
@@ -42,6 +39,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         // handle incoming text if needed
     }
 }
+
 volatile bool output_state = false;
 volatile int initial_on_time = 2;   // minutes
 volatile int pwm_period = 30;        // seconds
@@ -90,13 +88,11 @@ void handleHeaterLogic() {
         output_state = false;
         digitalWrite(OUTPUT_PIN, LOW);
         // Indicator LEDs turn OFF when system is OFF
-        // digitalWrite(ACTIVE_PIN, HIGH);
         digitalWrite(ACTIVE2_PIN, HIGH);
         return;
     }
 
     // System is ON: Indicator LEDs turn ON and stay ON regardless of PWM phase
-    // digitalWrite(ACTIVE_PIN, LOW);
     digitalWrite(ACTIVE2_PIN, LOW);
 
     unsigned long currentMillis = millis();
@@ -240,13 +236,6 @@ void setup() {
     if (!LittleFS.begin()) {
         // Filesystem mount failed
     }
-
-    // Web Server Routes
-    // server.serveStatic("/", LittleFS, "/index.html");
-    // server.serveStatic("/styles.css", LittleFS, "/styles.css");
-    // server.serveStatic("/script.js", LittleFS, "/script.js");
-    // server.serveStatic("/update.html", LittleFS, "/update.html");
-    // This automatically serves index.html for "/", and handles all other files dynamically!
     
     server.on("/state", HTTP_GET, handleState);
     server.on("/post", HTTP_POST, handlePost);
@@ -259,10 +248,17 @@ void setup() {
         ESP.restart();
     }, handleUpdate);
 
-    server.serveStatic("/", LittleFS, "/");
-    server.serveStatic("/manifest.json", LittleFS, "/manifest.json");
-    server.serveStatic("/sw.js", LittleFS, "/sw.js");
-    server.serveStatic("/icons", LittleFS, "/icons");
+    server.on("/", HTTP_GET, []() {
+      File f = LittleFS.open("/index.html.gz", "r");
+      if (!f) { server.send(404); return; }
+      server.sendHeader("Content-Encoding", "gzip");
+      server.sendHeader("Cache-Control", "max-age=3600");
+      server.streamFile(f, "text/html");
+      f.close();
+    });
+
+    server.serveStatic("/manifest.json", LittleFS, "/manifest.json", "max-age=86400");
+    server.serveStatic("/icons", LittleFS, "/icons", "max-age=86400");
 
     server.begin();
 
