@@ -20,9 +20,14 @@ Controlling a resistive AC heating element using an SSR (Solid State Relay) cont
 ## Build
 
 ```
+node build.mjs
+
+cd Arduino
+
 arduino-cli compile --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
 
-arduino-cli upload -p /dev/ttyUSB0 --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
+#arduino-cli upload -p /dev/ttyUSB0 --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
+arduino-cli compile --fqbn esp8266:esp8266:generic:xtal=160,eesz=1M64 ESP01S-Kitchen
 
 mklittlefs -c ESP01S-Kitchen/data -p 256 -b 4096 -s 0x10000 littlefs.bin
 
