@@ -9,13 +9,13 @@
 
 ## Goal
 
-Controlling a resistive AC heating element using an SSR (Solid State Relay) controlled by a ESP01 (or ESP01S, ESP8266 based board)
+Controlling a resistive AC heating element using an SSR (Solid State Relay) controlled by a ESP01S (ESP8266 based board)
 
 * Push-button On/Off :heavy_check_mark:
 * App Control (On/Off, Timer, Dimmer) :heavy_check_mark:
-* OTA Update
+* OTA Update :heavy_check_mark:
 * Translations :x:
-* CI/CD (Github Actions) :heavy_check_mark:
+* CI/CD (Github Actions) :x:
 
 ## Build
 
@@ -26,7 +26,6 @@ cd Arduino
 
 arduino-cli compile --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
 
-#arduino-cli upload -p /dev/ttyUSB0 --fqbn esp8266:esp8266:generic:eesz=1M64 ESP01S-Kitchen
 arduino-cli compile --fqbn esp8266:esp8266:generic:xtal=160,eesz=1M64 ESP01S-Kitchen
 
 mklittlefs -c ESP01S-Kitchen/data -p 256 -b 4096 -s 0x10000 littlefs.bin
