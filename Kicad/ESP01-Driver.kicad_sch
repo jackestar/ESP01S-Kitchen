@@ -6,6 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "ESP01S Kitchen")
+		(date "2026-11-11")
 		(rev "02")
 		(company "Jackestar")
 	)
