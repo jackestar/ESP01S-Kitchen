@@ -38,7 +38,7 @@ esptool.py --port /dev/ttyUSB0 write_flash 0xEB000 littlefs.bin
 
 [Articulo del Esquemático](https://jackestar.netlify.app/Blog/Kicad/ESP01S-Kitchen-Driver.html)
 
-![Driver](Kicad/ESP01-Driver.jpg)
+![Driver](Kicad/ESP01-Driver-v2.png)
 
 [Kicad Project](Kicad)
 
